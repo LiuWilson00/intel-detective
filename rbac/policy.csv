@@ -1,0 +1,5 @@
+p, role:admin, /api/users, *
+p, role:admin, /api/users/:id, *
+p, role:member, /api/users, read
+
+g, role:manager, role:member

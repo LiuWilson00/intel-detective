@@ -1,15 +1,21 @@
-import { CharacterState } from "../dto/game-state.dto";
-import { Occupation } from "../interfaces/occupations.interface";
-import { Gender, LangEnum } from "../types/game.type";
+import { CharacterState } from "src/common/interfaces/game.interfaces";
+import { LangEnum } from "src/common/types/game.type";
+import { Occupation } from "src/common/utils/game-tool/interfaces/occupations.interface";
 
-export function toCharacterStateString(characterState: CharacterState): string {
-  const items = characterState.items.length
+export function toCharacterStateString(
+  characterState: CharacterState,
+  options: {
+    gender?: string;
+    name?: string;
+  } = {}
+): string {
+  const items = characterState.items?.length
     ? characterState.items.join(", ")
     : "no items";
-  const skills = characterState.skills.length
+  const skills = characterState.skills?.length
     ? characterState.skills.join(", ")
     : "no skills";
-  const status = characterState.status.length
+  const status = characterState.status?.length
     ? characterState.status.join(", ")
     : "no status effects";
 
@@ -17,12 +23,17 @@ export function toCharacterStateString(characterState: CharacterState): string {
     .map(([key, value]) => `${key}: ${value}`)
     .join(", ");
 
+  const _gender = options?.gender ?? characterState.gender ?? "Male";
+  const _name = options?.name ?? characterState.name ?? "Player";
+
   return `
-${characterState.name}, a ${characterState.gender.toString()} ${
+${_name}, a ${_gender}, 
+has the following character state:
+- occupation: ${
     typeof characterState.occupation === "string"
       ? characterState.occupation
-      : JSON.stringify(characterState.occupation)
-  }, has the following character state:
+      : "Adventurer"
+  }
 - Health: ${characterState.health}
 - Mana: ${characterState.mana}
 - Items: ${items}
@@ -39,7 +50,6 @@ ${characterState.name}, a ${characterState.gender.toString()} ${
 export function MAKE_GAME_START_PROMPTS_V3(params: {
   lang: LangEnum;
   name: string;
-  gender: Gender;
   character: CharacterState;
   theme: string;
 }) {
@@ -110,7 +120,6 @@ export const CHARACTER_CREATION_PROMPT = (
 export function MAKE_STORY_PROMPT(params: {
   lang: LangEnum;
   name: string;
-  gender: Gender;
   character: CharacterState;
   theme: string;
 }) {
@@ -124,8 +133,6 @@ The game should be in the ${params.lang} language. Remember to focus on the narr
 
 export function MAKE_OPTIONS_PROMPT(params: {
   lang: LangEnum;
-  name: string;
-  gender: Gender;
   character: CharacterState;
   theme: string;
   storySegment: string;
@@ -136,7 +143,61 @@ export function MAKE_OPTIONS_PROMPT(params: {
 Theme: "${params.theme}"
 Story segment: ${params.storySegment}
 
-Initial state: ${characterInfo}
+Player state: ${characterInfo}
 
 The options should be in the ${params.lang} language. Remember to focus on providing options and avoid including any story progression or consequences in this prompt.`;
+}
+
+export function MAKE_NEXT_STORY_PROMPT(params: {
+  lang: LangEnum;
+  character: CharacterState;
+  theme: string;
+  storySegment: string;
+  option: string;
+  playerExperience: string[];
+}) {
+  const characterInfo = toCharacterStateString(params.character);
+  const playerExperienceText = params.playerExperience.join("\n");
+
+  return `You are a word game generator, I will provide you the player's story experience, you must generate a new story based on the information I provide:
+  Theme: "${params.theme}"
+
+  ${
+    playerExperienceText != "" ? `playerExperience:${playerExperienceText}` : ""
+  }
+
+  last story:${params.storySegment}
+ 
+  Player state: ${characterInfo} 
+
+  Player action:${params.option}
+  
+  next story:`;
+}
+
+export function MAKE_NEXT_CHARACTER_STATE_PROMPT(params: {
+  lang: LangEnum;
+  character: CharacterState;
+  theme: string;
+  storySegment: string;
+  option: string;
+  playerExperience: string[];
+}) {
+  const characterInfo = toCharacterStateString(params.character);
+  const playerExperienceText = params.playerExperience.join("\n");
+
+  return `You are a word game generator, I will provide you the player's story experience, you must generate a new character state based on the information I provide:
+  Theme: "${params.theme}"
+
+  ${
+    playerExperienceText != "" ? `playerExperience:${playerExperienceText}` : ""
+  }
+
+  last story:${params.storySegment}
+ 
+  Player state: ${characterInfo} 
+
+  Player action:${params.option}
+  
+  next character state:`;
 }

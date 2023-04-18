@@ -7,12 +7,13 @@ import {
   // MAKE_GAME_SESSION_JSON_TRANSFORM_PROMPTS_LITE,
   MAKE_GAME_SESSION_JSON_TRANSFORM_PROMPTS_V2,
 } from "./prompts/json.prompt";
+import { GameState } from "../../interfaces/game.interfaces";
 const model = "gpt-3.5-turbo";
 const temperature = 0.9;
 @Injectable()
 export class JsonToolService {
   constructor(private readonly openaiService: OpenAIService) {}
-  async transformGameSessionJSON(gameText: string): Promise<any> {
+  async transformGameSessionJSON(gameText: string): Promise<GameState> {
     try {
       const response = await this.openaiService.createChatCompletion({
         messages: [
